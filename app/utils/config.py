@@ -5,7 +5,7 @@ load_dotenv()
 
 class Config:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/contact_center.db")
+    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:yV83Pi0Yh9CdQOxN@db.bxjhsuedwfxsyazxxzrc.supabase.co:5432/postgres")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     
     # Model paths
@@ -29,3 +29,12 @@ class Config:
     # Performance settings
     NUM_THREADS = 2  # Conservative thread count for i5
     ENABLE_CACHING = True
+    
+    @classmethod
+    def get_database_url(cls):
+        """Get database URL with Streamlit secrets fallback."""
+        try:
+            import streamlit as st
+            return st.secrets.get("DATABASE_URL", cls.DATABASE_URL)
+        except:
+            return cls.DATABASE_URL
