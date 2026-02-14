@@ -1,329 +1,323 @@
-# Contact Center AI - RAG + Analytics + Agent Assist
+# Contact Center AI - CPU Optimized Edition
 
-A production-ready AI-powered customer support system that provides intent classification, sentiment analysis, conversation summarization, RAG-based knowledge assistance, and analytics dashboard.
+An AI-powered customer support analytics and assistance platform optimized for low-spec, CPU-only systems.
 
-## 🏗️ Architecture Overview
+## 🎯 System Requirements
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Streamlit     │    │    FastAPI      │    │   ML Services   │
-│   Dashboard     │◄──►│      API        │◄──►│  (Intent/Sent)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │   RAG System    │    │   LLM Service   │
-                       │ (FAISS + LangC) │◄──►│ (OpenAI/Mock)   │
-                       └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │   SQLite DB     │
-                       │ (Conversations) │
-                       └─────────────────┘
-```
+### Minimum Requirements (CPU-Only)
+- **OS**: Ubuntu 24.04 (or similar Linux distribution)
+- **Python**: 3.12+
+- **CPU**: Intel i5 11th Gen or equivalent
+- **RAM**: 16GB (8GB minimum)
+- **Storage**: 10GB free space
+- **GPU**: Not required (CPU-only optimization)
 
-## ✨ Features
+### Recommended for Better Performance
+- **RAM**: 32GB
+- **CPU**: Intel i7 or AMD Ryzen 7
+- **SSD**: For faster model loading
 
-- **Intent Classification**: TF-IDF + Logistic Regression for customer intent detection
-- **Sentiment Analysis**: Hugging Face transformers with rule-based fallback
-- **Conversation Summarization**: LLM-powered conversation analysis
-- **RAG Knowledge Base**: FAISS vector search with grounded responses
-- **Agent Assistance**: Real-time suggestions for customer service agents
-- **Analytics Dashboard**: Interactive visualizations and metrics
-- **REST API**: Complete FastAPI backend with OpenAPI documentation
-- **Mock Mode**: Runs without external API keys for development/demo
+## 🚀 Quick Start (CPU-Optimized)
 
-## 🛠️ Tech Stack
-
-**Backend:**
-- Python 3.11
-- FastAPI (REST API)
-- SQLite (Database)
-
-**AI/ML:**
-- Scikit-learn (Intent Classification)
-- Hugging Face Transformers (Sentiment Analysis)
-- OpenAI GPT (LLM - optional)
-- LangChain (RAG Pipeline)
-- FAISS (Vector Database)
-
-**Frontend:**
-- Streamlit (Analytics Dashboard)
-- Plotly (Interactive Charts)
-
-**DevOps:**
-- Docker
-- Requirements.txt
-- Environment Configuration
-
-## 🚀 Quick Start
-
-### 1. Clone and Setup
-
+### Option 1: Automated Installation
 ```bash
+# Clone the repository
 git clone <repository-url>
 cd contact-center-ai
+
+# Run CPU-optimized installation
+./install_cpu_optimized.sh
+
+# Activate environment and start
+source venv/bin/activate
+cp .env.cpu .env
+python -m app.main
 ```
 
-### 2. Install Dependencies
-
+### Option 2: Manual Installation
 ```bash
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install CPU-optimized dependencies
+pip install --upgrade pip
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
-```
 
-### 3. Environment Configuration
+# Download language models
+python -m spacy download en_core_web_sm
+python -c "import nltk; nltk.download('punkt'); nltk.download('vader_lexicon')"
 
-```bash
+# Set up environment
 cp .env.example .env
-# Edit .env with your OpenAI API key (optional)
+mkdir -p data models cache logs
+
+# Start the application
+python -m app.main
 ```
 
-### 4. Generate Sample Data
+### Option 3: Docker (CPU-Optimized)
+```bash
+# Build CPU-optimized image
+docker build -t contact-center-ai-cpu .
+
+# Run with CPU optimization
+docker run -p 8000:8000 -p 8501:8501 \
+  -e OMP_NUM_THREADS=2 \
+  -e MKL_NUM_THREADS=2 \
+  --memory=8g \
+  --cpus=2 \
+  contact-center-ai-cpu
+```
+
+## 🔧 CPU Optimization Features
+
+### Lightweight Models
+- **Sentence Transformers**: `all-MiniLM-L6-v2` (22MB)
+- **Sentiment Analysis**: TextBlob + NLTK (CPU-only)
+- **Intent Classification**: Scikit-learn TF-IDF + Logistic Regression
+- **Text Processing**: spaCy `en_core_web_sm` (15MB)
+
+### Performance Optimizations
+- **Caching**: Disk-based caching for embeddings and predictions
+- **Batch Processing**: Optimized batch sizes for limited RAM
+- **Thread Limiting**: Controlled thread usage for CPU efficiency
+- **Memory Management**: Reduced model sizes and smart garbage collection
+
+### Expected Performance (Intel i5 11th Gen + 16GB RAM)
+- **API Response Time**: 100-500ms
+- **Intent Classification**: 50-100ms
+- **Sentiment Analysis**: 20-50ms
+- **RAG Queries**: 200-800ms
+- **Memory Usage**: 2-4GB
+- **CPU Usage**: 30-60% under normal load
+
+## 📊 Performance Monitoring
+
+Monitor system performance and get optimization recommendations:
 
 ```bash
-python scripts/generate_data.py
+# Single performance check
+python scripts/monitor_performance.py --single
+
+# Continuous monitoring (5 minutes)
+python scripts/monitor_performance.py --duration 5
+
+# Extended monitoring with custom interval
+python scripts/monitor_performance.py --duration 30 --interval 60
 ```
 
-### 5. Start the API Server
+## 🏗️ Architecture
 
+### Core Components
+- **FastAPI Backend**: Lightweight REST API
+- **Streamlit Dashboard**: Web-based analytics interface
+- **SQLite Database**: Local data storage
+- **FAISS Vector Store**: CPU-optimized similarity search
+
+### Services
+- **ML Service**: Intent classification and sentiment analysis
+- **RAG Service**: Knowledge base querying with context retrieval
+- **LLM Service**: OpenAI integration with local fallbacks
+- **Agent Assist**: Real-time conversation analysis
+
+## 🔌 API Endpoints
+
+### Health Check
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+curl http://localhost:8000/api/v1/health
 ```
 
-### 6. Launch Dashboard
-
+### Analyze Conversation
 ```bash
-streamlit run dashboard/streamlit_app.py --server.port 8501
+curl -X POST http://localhost:8000/api/v1/conversations/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_message": "I need help with my order",
+    "agent_response": "I will help you with that right away"
+  }'
 ```
 
-## 🐳 Docker Deployment
-
-### Build and Run API
-
+### RAG Query
 ```bash
-docker build -t contact-center-ai .
-docker run -p 8000:8000 contact-center-ai
+curl -X POST http://localhost:8000/api/v1/rag/query \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is your refund policy?"}'
 ```
 
-### Run Dashboard
-
+### Generate Response
 ```bash
-docker run -p 8501:8501 contact-center-ai streamlit run dashboard/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+curl -X POST http://localhost:8000/api/v1/agent/suggest-response \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_message": "I am frustrated with my order delay",
+    "context": "Customer ordered 3 days ago"
+  }'
 ```
 
-## 📡 API Endpoints
-
-### Base URL: `http://localhost:8000/api/v1`
-
-#### Intent Classification
-```bash
-POST /predict/intent
-{
-  "message": "I want to return this product"
-}
-```
-
-#### Sentiment Analysis
-```bash
-POST /predict/sentiment
-{
-  "message": "I'm very frustrated with this service"
-}
-```
-
-#### Conversation Summarization
-```bash
-POST /summarize
-{
-  "conversation": "Customer: I need help with my order\nAgent: I can help you with that..."
-}
-```
-
-#### RAG Knowledge Query
-```bash
-POST /rag/query
-{
-  "question": "What is your refund policy?"
-}
-```
-
-#### Agent Assistance
-```bash
-POST /agent-assist
-{
-  "customer_message": "My package hasn't arrived yet"
-}
-```
-
-#### Analytics Summary
-```bash
-GET /analytics/summary
-```
-
-## 📊 Dashboard Features
-
-### Analytics Dashboard
-- Total conversation metrics
-- Intent distribution charts
-- Sentiment analysis visualization
-- Daily volume trends
-
-### Live Demo
-- Real-time intent/sentiment prediction
-- Knowledge base query testing
-- Agent assist simulation
-
-### Sample Conversations
-- Browse generated conversations
-- Filter by intent and sentiment
-- Conversation details view
-
-## 🔧 Configuration
+## 🎛️ Configuration
 
 ### Environment Variables (.env)
-```
-OPENAI_API_KEY=your_openai_api_key_here
-DATABASE_URL=sqlite:///./contact_center.db
+```bash
+# Database
+DATABASE_URL=sqlite:///./data/contact_center.db
+
+# Logging
 LOG_LEVEL=INFO
+
+# Optional: OpenAI API (for enhanced features)
+OPENAI_API_KEY=your_key_here
+
+# CPU Optimization
+OMP_NUM_THREADS=2
+MKL_NUM_THREADS=2
+NUMEXPR_NUM_THREADS=2
+OPENBLAS_NUM_THREADS=2
+TOKENIZERS_PARALLELISM=false
 ```
 
-### Model Configuration (app/utils/config.py)
+### Performance Tuning
+Edit `app/utils/config.py` for fine-tuning:
 ```python
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 50
+# Reduce for lower memory usage
+CHUNK_SIZE = 300
+BATCH_SIZE = 16
+CACHE_SIZE = 100  # MB
+
+# Increase for better accuracy (uses more resources)
+MAX_SEQUENCE_LENGTH = 256
 TOP_K_RESULTS = 3
 ```
 
-## 📁 Project Structure
+## 📈 Usage Examples
 
+### 1. Start the API Server
+```bash
+source venv/bin/activate
+python -m app.main
+```
+
+### 2. Launch Dashboard
+```bash
+# In a new terminal
+source venv/bin/activate
+streamlit run dashboard/streamlit_app.py
+```
+
+### 3. Generate Sample Data
+```bash
+python scripts/generate_data.py --count 100
+```
+
+### 4. Monitor Performance
+```bash
+python scripts/monitor_performance.py --single
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+**High Memory Usage**
+```bash
+# Reduce cache size in config.py
+CACHE_SIZE = 50  # Reduce from 100MB
+
+# Clear cache
+rm -rf cache/*
+
+# Restart application
+```
+
+**Slow Response Times**
+```bash
+# Enable OpenAI API for heavy tasks
+export OPENAI_API_KEY=your_key
+
+# Reduce batch sizes
+BATCH_SIZE = 8  # Reduce from 16
+
+# Use fewer threads
+export OMP_NUM_THREADS=1
+```
+
+**Model Loading Errors**
+```bash
+# Re-download models
+python -c "
+import nltk
+from sentence_transformers import SentenceTransformer
+nltk.download('punkt', force=True)
+model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+"
+```
+
+### Performance Tips
+
+1. **Use OpenAI API**: For complex LLM tasks, use OpenAI API instead of local models
+2. **Enable Caching**: Keep caching enabled for repeated operations
+3. **Monitor Resources**: Use the performance monitor to identify bottlenecks
+4. **Optimize Batch Sizes**: Reduce batch sizes if running out of memory
+5. **Close Other Apps**: Free up RAM by closing unnecessary applications
+
+## 🛠️ Development
+
+### Project Structure
 ```
 contact-center-ai/
 ├── app/
-│   ├── main.py              # FastAPI application
-│   ├── api/
-│   │   └── endpoints.py     # API routes
-│   ├── services/
-│   │   ├── ml_service.py    # ML models
-│   │   ├── llm_service.py   # LLM integration
-│   │   ├── rag_service.py   # RAG system
-│   │   └── agent_assist_service.py
-│   ├── models/
-│   │   └── schemas.py       # Pydantic models
-│   ├── data/
-│   │   └── database.py      # Database operations
-│   ├── rag/
-│   │   └── knowledge_base.py # Vector store
-│   └── utils/
-│       ├── config.py        # Configuration
-│       └── logger.py        # Logging setup
-├── dashboard/
-│   └── streamlit_app.py     # Analytics dashboard
-├── scripts/
-│   └── generate_data.py     # Data generation
-├── requirements.txt         # Dependencies
-├── .env.example            # Environment template
-├── Dockerfile              # Container config
-└── README.md               # This file
+│   ├── api/           # FastAPI endpoints
+│   ├── data/          # Database management
+│   ├── models/        # Data schemas
+│   ├── rag/           # Knowledge base & retrieval
+│   ├── services/      # Core business logic
+│   └── utils/         # Configuration & utilities
+├── dashboard/         # Streamlit web interface
+├── scripts/           # Utility scripts
+├── data/             # Database files
+├── models/           # Trained ML models
+└── cache/            # Performance cache
 ```
 
-## 🎯 Use Cases
+### Adding New Features
+1. **New API Endpoint**: Add to `app/api/endpoints.py`
+2. **New Service**: Create in `app/services/`
+3. **New Model**: Add to `app/models/schemas.py`
+4. **Dashboard Component**: Extend `dashboard/streamlit_app.py`
 
-### Contact Center Optimization
-- **Real-time Agent Assistance**: Provide agents with instant intent detection, sentiment analysis, and suggested responses
-- **Quality Monitoring**: Analyze conversation patterns and sentiment trends
-- **Knowledge Management**: Centralized FAQ system with intelligent retrieval
-- **Performance Analytics**: Track resolution times, customer satisfaction, and agent performance
-
-### Business Intelligence
-- **Customer Insights**: Understand common issues and customer sentiment
-- **Operational Efficiency**: Identify bottlenecks and optimization opportunities
-- **Training Data**: Generate insights for agent training programs
-- **Reporting**: Automated analytics for management dashboards
-
-## 🧪 Example API Requests
-
-### cURL Examples
-
+### Testing
 ```bash
-# Intent Classification
-curl -X POST "http://localhost:8000/api/v1/predict/intent" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "I want to cancel my order"}'
+# Install test dependencies
+pip install pytest pytest-asyncio httpx
 
-# Sentiment Analysis
-curl -X POST "http://localhost:8000/api/v1/predict/sentiment" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "This service is terrible!"}'
+# Run tests
+pytest tests/
 
-# RAG Query
-curl -X POST "http://localhost:8000/api/v1/rag/query" \
-  -H "Content-Type: application/json" \
-  -d '{"question": "How do I return an item?"}'
-
-# Agent Assist
-curl -X POST "http://localhost:8000/api/v1/agent-assist" \
-  -H "Content-Type: application/json" \
-  -d '{"customer_message": "My order is late"}'
+# Test specific endpoint
+python scripts/monitor_performance.py --single
 ```
 
-### Python Examples
+## 📝 License
 
-```python
-import requests
-
-# Intent prediction
-response = requests.post(
-    "http://localhost:8000/api/v1/predict/intent",
-    json={"message": "I need a refund"}
-)
-print(response.json())
-
-# Agent assistance
-response = requests.post(
-    "http://localhost:8000/api/v1/agent-assist",
-    json={"customer_message": "The app keeps crashing"}
-)
-print(response.json())
-```
-
-## 🔍 Development Notes
-
-### Running Without OpenAI API Key
-The system includes mock responses for all LLM functionality, making it fully functional without external API dependencies.
-
-### Model Training
-Intent classification models are automatically trained on the generated synthetic data. Models are saved locally and reloaded on startup.
-
-### Extending the Knowledge Base
-Add new documents to the RAG system by modifying `app/rag/knowledge_base.py` or implementing document upload functionality.
-
-### Scaling Considerations
-- Replace SQLite with PostgreSQL for production
-- Implement Redis caching for model predictions
-- Use cloud vector databases (Pinecone, Weaviate) for larger knowledge bases
-- Add authentication and rate limiting
-
-## 📈 Performance Metrics
-
-- **Intent Classification**: ~85% accuracy on synthetic data
-- **Sentiment Analysis**: Hugging Face model with 90%+ accuracy
-- **RAG Retrieval**: Sub-second response times with FAISS
-- **API Response**: <200ms average response time
-- **Dashboard**: Real-time updates with caching
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Test on low-spec hardware
 5. Submit a pull request
 
-## 📄 License
+## 📞 Support
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+For issues related to CPU optimization or low-spec deployment:
+- Check the troubleshooting section
+- Run performance monitoring
+- Review system requirements
+- Consider using OpenAI API for heavy tasks
 
 ---
 
-**Contact Center AI** - Transforming customer support with AI-powered insights and assistance.
+**Note**: This CPU-optimized version is specifically designed for systems without GPU support. For GPU-enabled systems, consider the standard version with larger transformer models.

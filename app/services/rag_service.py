@@ -1,5 +1,5 @@
 from typing import Dict, List
-from ..rag.knowledge_base import KnowledgeBase
+from ..rag.knowledge_base import LightweightKnowledgeBase
 from ..services.llm_service import LLMService
 from ..utils.logger import setup_logger
 
@@ -7,7 +7,7 @@ logger = setup_logger(__name__)
 
 class RAGService:
     def __init__(self):
-        self.knowledge_base = KnowledgeBase()
+        self.knowledge_base = LightweightKnowledgeBase()
         self.llm_service = LLMService()
     
     def query(self, question: str) -> Dict[str, any]:
@@ -25,7 +25,7 @@ class RAGService:
         
         # Get source documents for transparency
         search_results = self.knowledge_base.search(question)
-        sources = [doc.metadata.get('title', 'Unknown') for doc, _ in search_results]
+        sources = [doc['metadata'].get('title', 'Unknown') for doc, _ in search_results]
         
         return {
             'answer': response,

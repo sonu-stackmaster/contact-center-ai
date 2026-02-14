@@ -11,9 +11,13 @@ class LLMService:
         self.has_openai_key = bool(Config.OPENAI_API_KEY)
         
         if self.has_openai_key:
-            openai.api_key = Config.OPENAI_API_KEY
-            self.client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
-            logger.info("OpenAI client initialized")
+            try:
+                self.client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
+                logger.info("OpenAI client initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize OpenAI client: {e}. Using mock responses.")
+                self.has_openai_key = False
+                self.client = None
         else:
             logger.info("No OpenAI API key found. Using mock responses.")
     

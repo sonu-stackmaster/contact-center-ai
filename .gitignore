@@ -121,6 +121,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
 .venv
 env/
 venv/
@@ -179,6 +180,10 @@ data/*.pickle
 *.h5
 *.onnx
 
+# Cache directories
+cache/
+*.cache
+
 # Logs
 logs/
 *.log
@@ -188,6 +193,9 @@ logs/
 *.temp
 .DS_Store
 Thumbs.db
+
+# Pip installation logs
+=*
 
 # Docker
 .dockerignore

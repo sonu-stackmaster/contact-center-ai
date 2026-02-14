@@ -1,16 +1,43 @@
+# Core API framework
 fastapi==0.104.1
 uvicorn==0.24.0
 pydantic==2.5.0
+
+# Data processing (lightweight versions)
 pandas==2.1.4
-numpy>=1.26.0
+numpy>=1.26.0,<2.0.0
+
+# Machine Learning (CPU-optimized)
 scikit-learn>=1.4.0
-transformers>=4.37.0
-torch>=2.2.0
-langchain==0.0.350
-langchain-community==0.0.10
+
+# Compatible versions for sentence transformers
+sentence-transformers>=2.2.0,<3.0.0
+transformers>=4.21.0,<5.0.0
+torch>=1.11.0
+huggingface-hub>=0.15.0,<1.0.0
+tokenizers>=0.13.0
+
+# Lightweight NLP alternatives
+spacy>=3.7.0,<4.0.0
+nltk>=3.8.0
+
+# Vector database (CPU version)
 faiss-cpu>=1.8.0
+
+# Optional: OpenAI for enhanced features
 openai==1.6.1
+
+# Web interface
 streamlit==1.29.0
 plotly==5.17.0
+
+# Utilities
 python-dotenv==1.0.0
 requests==2.31.0
+psutil>=5.9.0
+
+# Text processing
+textblob>=0.17.0
+
+# Lightweight caching
+diskcache>=5.6.0

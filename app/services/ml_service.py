@@ -5,37 +5,62 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from transformers import pipeline
 import pandas as pd
 from typing import Tuple, Optional
+from textblob import TextBlob
+import nltk
+from diskcache import Cache
 from ..utils.config import Config
 from ..utils.logger import setup_logger
 from ..data.database import DatabaseManager
 
 logger = setup_logger(__name__)
 
+# Download required NLTK data (lightweight)
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
+
+try:
+    nltk.data.find('corpora/vader_lexicon')
+except LookupError:
+    nltk.download('vader_lexicon', quiet=True)
+
 class IntentClassifier:
     def __init__(self):
         self.vectorizer = None
         self.model = None
         self.is_trained = False
+        self.cache = Cache('cache/intent_cache', size_limit=Config.CACHE_SIZE * 1024 * 1024) if Config.ENABLE_CACHING else None
         
     def train(self, texts: list, labels: list) -> dict:
-        """Train the intent classification model."""
-        logger.info("Training intent classifier...")
+        """Train the intent classification model with CPU optimization."""
+        logger.info("Training lightweight intent classifier...")
         
         # Split data
         X_train, X_test, y_train, y_test = train_test_split(
             texts, labels, test_size=0.2, random_state=42, stratify=labels
         )
         
-        # Vectorize text
-        self.vectorizer = TfidfVectorizer(max_features=5000, stop_words='english')
+        # Vectorize text with reduced features for performance
+        self.vectorizer = TfidfVectorizer(
+            max_features=2000,  # Reduced from 5000 for performance
+            stop_words='english',
+            ngram_range=(1, 2),  # Include bigrams for better context
+            min_df=2,  # Ignore rare terms
+            max_df=0.95  # Ignore too common terms
+        )
         X_train_vec = self.vectorizer.fit_transform(X_train)
         X_test_vec = self.vectorizer.transform(X_test)
         
-        # Train model
-        self.model = LogisticRegression(random_state=42, max_iter=1000)
+        # Train lightweight model
+        self.model = LogisticRegression(
+            random_state=42, 
+            max_iter=500,  # Reduced iterations
+            solver='lbfgs',  # Better for multiclass classification
+            C=1.0  # Default regularization
+        )
         self.model.fit(X_train_vec, y_train)
         
         # Evaluate
@@ -48,16 +73,26 @@ class IntentClassifier:
         return report
     
     def predict(self, text: str) -> Tuple[str, float]:
-        """Predict intent for a given text."""
+        """Predict intent for a given text with caching."""
         if not self.is_trained:
             raise ValueError("Model not trained yet")
+        
+        # Check cache first
+        if self.cache and text in self.cache:
+            return self.cache[text]
         
         text_vec = self.vectorizer.transform([text])
         prediction = self.model.predict(text_vec)[0]
         probabilities = self.model.predict_proba(text_vec)[0]
         confidence = max(probabilities)
         
-        return prediction, confidence
+        result = (prediction, confidence)
+        
+        # Cache result
+        if self.cache:
+            self.cache[text] = result
+        
+        return result
     
     def save_model(self, model_path: str, vectorizer_path: str):
         """Save trained model and vectorizer."""
@@ -85,54 +120,53 @@ class IntentClassifier:
             return True
         return False
 
-class SentimentAnalyzer:
-    def __init__(self):
-        self.pipeline = None
-        self._initialize_pipeline()
+class LightweightSentimentAnalyzer:
+    """CPU-optimized sentiment analyzer using TextBlob and NLTK."""
     
-    def _initialize_pipeline(self):
-        """Initialize the sentiment analysis pipeline."""
-        try:
-            self.pipeline = pipeline(
-                "sentiment-analysis",
-                model="cardiffnlp/twitter-roberta-base-sentiment-latest",
-                return_all_scores=True
-            )
-            logger.info("Sentiment analyzer initialized with Hugging Face model")
-        except Exception as e:
-            logger.warning(f"Failed to load HF model: {e}. Using rule-based fallback.")
-            self.pipeline = None
+    def __init__(self):
+        self.cache = Cache('cache/sentiment_cache', size_limit=Config.CACHE_SIZE * 1024 * 1024) if Config.ENABLE_CACHING else None
+        logger.info("Lightweight sentiment analyzer initialized")
     
     def predict(self, text: str) -> Tuple[str, float]:
-        """Predict sentiment for a given text."""
-        if self.pipeline:
-            return self._predict_with_model(text)
-        else:
+        """Predict sentiment using TextBlob (CPU-only, fast)."""
+        # Check cache first
+        if self.cache and text in self.cache:
+            return self.cache[text]
+        
+        try:
+            # Use TextBlob for sentiment analysis (lightweight, no GPU needed)
+            blob = TextBlob(text)
+            polarity = blob.sentiment.polarity
+            
+            # Convert polarity to sentiment label
+            if polarity > 0.1:
+                sentiment = 'positive'
+                confidence = min(0.9, 0.6 + abs(polarity) * 0.3)
+            elif polarity < -0.1:
+                sentiment = 'negative'
+                confidence = min(0.9, 0.6 + abs(polarity) * 0.3)
+            else:
+                sentiment = 'neutral'
+                confidence = 0.7
+            
+            result = (sentiment, confidence)
+            
+            # Cache result
+            if self.cache:
+                self.cache[text] = result
+            
+            return result
+            
+        except Exception as e:
+            logger.warning(f"TextBlob sentiment analysis failed: {e}. Using rule-based fallback.")
             return self._predict_rule_based(text)
-    
-    def _predict_with_model(self, text: str) -> Tuple[str, float]:
-        """Predict using Hugging Face model."""
-        results = self.pipeline(text)[0]
-        
-        # Convert labels to our format
-        label_mapping = {
-            'LABEL_0': 'negative',
-            'LABEL_1': 'neutral', 
-            'LABEL_2': 'positive'
-        }
-        
-        best_result = max(results, key=lambda x: x['score'])
-        sentiment = label_mapping.get(best_result['label'], best_result['label'].lower())
-        confidence = best_result['score']
-        
-        return sentiment, confidence
     
     def _predict_rule_based(self, text: str) -> Tuple[str, float]:
         """Simple rule-based sentiment analysis as fallback."""
         text_lower = text.lower()
         
-        positive_words = ['good', 'great', 'excellent', 'amazing', 'love', 'perfect', 'happy', 'satisfied']
-        negative_words = ['bad', 'terrible', 'awful', 'hate', 'horrible', 'disappointed', 'angry', 'frustrated']
+        positive_words = ['good', 'great', 'excellent', 'amazing', 'love', 'perfect', 'happy', 'satisfied', 'wonderful', 'fantastic']
+        negative_words = ['bad', 'terrible', 'awful', 'hate', 'horrible', 'disappointed', 'angry', 'frustrated', 'worst', 'useless']
         
         pos_count = sum(1 for word in positive_words if word in text_lower)
         neg_count = sum(1 for word in negative_words if word in text_lower)
@@ -147,7 +181,7 @@ class SentimentAnalyzer:
 class MLService:
     def __init__(self):
         self.intent_classifier = IntentClassifier()
-        self.sentiment_analyzer = SentimentAnalyzer()
+        self.sentiment_analyzer = LightweightSentimentAnalyzer()
         self._load_or_train_models()
     
     def _load_or_train_models(self):
